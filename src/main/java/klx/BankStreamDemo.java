@@ -15,105 +15,44 @@ import java.util.stream.Stream;
 /**
  * Bank class representing a collection of accounts.
  */
-class Bank {
-    private final String name;
-    private final List<Account> accounts;
-
-
-    public Bank(String name, List<Account> accounts) {
-        this.name = name;
-        this.accounts = accounts;
-    }
-
-    public List<Account> getAccounts() {
-        return accounts;
-    }
-
-    @SuppressWarnings("unused")
-    public String getName() {
-        return name;
-    }
-}
+record Bank(String name, List<Account> accounts) { }
 
 /**
  * Represents a bank account with a list of transactions.
  */
-class Account {
+record Account(String accountNumber, String customerName, List<Transaction> transactions) {
     static final String DEPOSIT = "DEPOSIT";
     static final String WITHDRAWAL = "WITHDRAWAL";
-    private final String accountNumber;
-    private final String customerName;
-    private final List<Transaction> transactions;
-
-    public Account(String accountNumber, String customerName, List<Transaction> transactions) {
-        this.accountNumber = accountNumber;
-        this.customerName = customerName;
-        this.transactions = transactions;
-    }
 
     public Account(String number, String ana, int initialBalance) {
-        this.accountNumber = number;
-        this.customerName = ana;
-        this.transactions = new ArrayList<>();
+        this(number, ana, new ArrayList<>());
         if (initialBalance > 0) {
             this.transactions.add(new Transaction(initialBalance, LocalDate.now(), DEPOSIT));
         }
-    }
-
-    public String getAccountNumber() {
-        return accountNumber;
-    }
-
-    public String getCustomerName() {
-        return customerName;
-    }
-
-    public List<Transaction> getTransactions() {
-        return transactions;
     }
 
     public double getBalance() {
         // Calculate balance by summing all transactions
         // For deposits, add the amount; for withdrawals, subtract the amount
         return transactions.stream()
-                .mapToDouble(tx -> tx.getType().equals(DEPOSIT) ? tx.getAmount() : -tx.getAmount())
+                .mapToDouble(tx -> tx.type().equals(DEPOSIT) ? tx.amount() : -tx.amount())
                 .sum();
     }
 }
 
 /**
  * Represents a bank transaction.
+ *
+ * @param type Example: "DEPOSIT", "WITHDRAWAL"
  */
-class Transaction {
-    private final double amount;
-    private final LocalDate date;
-    private final String type; // Example: "DEPOSIT", "WITHDRAWAL"
-
-    public Transaction(double amount, LocalDate date, String type) {
-        this.amount = amount;
-        this.date = date;
-        this.type = type;
-    }
+record Transaction(double amount, LocalDate date, String type) {
 
     public static Map<String, List<Transaction>> groupTrasactionsByType(List<Transaction> transactions) {
         // Group transactions by their type using the groupingBy collector
         // This is efficient even for large collections as it processes the stream in a single pass
         // For millions of transactions, we could use parallelStream() for better performance
         return transactions.stream()
-                .collect(Collectors.groupingBy(Transaction::getType));
-    }
-
-    public double getAmount() {
-        return amount;
-    }
-
-    @SuppressWarnings("unused")
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public String getType() {
-        return type;
+                .collect(Collectors.groupingBy(Transaction::type));
     }
 }
 
@@ -142,23 +81,23 @@ public class BankStreamDemo {
         Bank bank = new Bank("MyBank", Arrays.asList(account1, account2));
 
         // 0. Simple Stream Example from a specific account
-        Stream<Transaction> stream = account1.getTransactions().stream();
-        double totalBalance = stream.mapToDouble(Transaction::getAmount)
+        Stream<Transaction> stream = account1.transactions().stream();
+        double totalBalance = stream.mapToDouble(Transaction::amount)
                                     .sum();
-        System.out.println("Total Balance for Account " + account1.getAccountNumber() + ": " + totalBalance);
+        System.out.println("Total Balance for Account " + account1.accountNumber() + ": " + totalBalance);
 
         // 1. Introduction to Streams
-        List<String> accountNumbers = bank.getAccounts()
+        List<String> accountNumbers = bank.accounts()
                 .stream()
-                .map(Account::getAccountNumber)
-                .collect(Collectors.toList());
+                .map(Account::accountNumber)
+                .toList();//older java code will have to use .collect(Collectors.toList())
         System.out.println("Account Numbers: " + accountNumbers);
 
         // 2. Core Concepts and Basics
-        List<Transaction> allTransactions = bank.getAccounts()
+        List<Transaction> allTransactions = bank.accounts()
                 .stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .filter(tx -> tx.getAmount() > 1000)
+                .flatMap(account -> account.transactions().stream())
+                .filter(tx -> tx.amount() > 1000)
                 .toList();
         System.out.println("High Value Transactions: " + allTransactions.size());
 
@@ -167,62 +106,62 @@ public class BankStreamDemo {
         Stream.of(accountTypes).forEach(System.out::println);
 
         // 3. Intermediate Operations
-        List<String> customers = bank.getAccounts()
+        List<String> customers = bank.accounts()
                 .stream()
-                .filter(account -> account.getTransactions()
+                .filter(account -> account.transactions()
                         .stream()
-                        .anyMatch(tx -> tx.getAmount() > 5000))
-                .map(Account::getCustomerName)
+                        .anyMatch(tx -> tx.amount() > 5000))
+                .map(Account::customerName)
                 .toList();
         System.out.println("Customers with high-value transactions: " + customers);
 
-        List<Transaction> sortedTransactions = bank.getAccounts()
+        List<Transaction> sortedTransactions = bank.accounts()
                 .stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .sorted(Comparator.comparing(Transaction::getAmount))
+                .flatMap(account -> account.transactions().stream())
+                .sorted(Comparator.comparing(Transaction::amount))
                 .toList();
-        sortedTransactions.forEach(tx -> System.out.println("Sorted Transaction Amount: " + tx.getAmount()));
+        sortedTransactions.forEach(tx -> System.out.println("Sorted Transaction Amount: " + tx.amount()));
 
         // 4. Terminal Operations
-        totalBalance = bank.getAccounts()
+        totalBalance = bank.accounts()
                 .stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .mapToDouble(Transaction::getAmount)
+                .flatMap(account -> account.transactions().stream())
+                .mapToDouble(Transaction::amount)
                 .sum();
         System.out.println("Total Bank Balance: " + totalBalance);
 
-        Map<String, List<Transaction>> transactionsByType = bank.getAccounts()
+        Map<String, List<Transaction>> transactionsByType = bank.accounts()
                 .stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .collect(Collectors.groupingBy(Transaction::getType));
+                .flatMap(account -> account.transactions().stream())
+                .collect(Collectors.groupingBy(Transaction::type));
         System.out.println("Transactions Grouped By Type: " + transactionsByType);
 
-        Transaction firstHighValueTx = bank.getAccounts()
+        Transaction firstHighValueTx = bank.accounts()
                 .stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .filter(tx -> tx.getAmount() > 5000)
+                .flatMap(account -> account.transactions().stream())
+                .filter(tx -> tx.amount() > 5000)
                 .findFirst()
                 .orElse(null);
-        System.out.println("First High Value Transaction: " + (firstHighValueTx != null ? firstHighValueTx.getAmount() : "None"));
+        System.out.println("First High Value Transaction: " + (firstHighValueTx != null ? firstHighValueTx.amount() : "None"));
 
         // 5. Advanced Stream Features
-        bank.getAccounts()
+        bank.accounts()
                 .parallelStream()
-                .flatMap(account -> account.getTransactions().parallelStream())
-                .forEach(tx -> System.out.println("Transaction in parallel: " + tx.getAmount()));
+                .flatMap(account -> account.transactions().parallelStream())
+                .forEach(tx -> System.out.println("Transaction in parallel: " + tx.amount()));
 
-        double averageTransaction = bank.getAccounts()
+        double averageTransaction = bank.accounts()
                 .stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .mapToDouble(Transaction::getAmount)
+                .flatMap(account -> account.transactions().stream())
+                .mapToDouble(Transaction::amount)
                 .average()
                 .orElse(0.0);
         System.out.println("Average Transaction Amount: " + averageTransaction);
 
         // 6. Common Pitfalls
         List<String> names = new ArrayList<>();
-        bank.getAccounts().stream()
-                .map(Account::getCustomerName)
+        bank.accounts().stream()
+                .map(Account::customerName)
                 .forEach(names::add); // Avoid modifying external state
         System.out.println("Customer names: " + names);
 
@@ -231,56 +170,56 @@ public class BankStreamDemo {
 
         // Exercise 1: Partitioning transactions by amount (greater than 1000)
         // Demonstrates partitioningBy collector
-        Map<Boolean, List<Transaction>> partitionedByAmount = bank.getAccounts().stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .collect(Collectors.partitioningBy(tx -> tx.getAmount() > 1000));
+        Map<Boolean, List<Transaction>> partitionedByAmount = bank.accounts().stream()
+                .flatMap(account -> account.transactions().stream())
+                .collect(Collectors.partitioningBy(tx -> tx.amount() > 1000));
         System.out.println("High-value transactions count: " + partitionedByAmount.get(true).size());
         System.out.println("Low-value transactions count: " + partitionedByAmount.get(false).size());
 
         // Exercise 2: Statistics on transaction amounts
         // Demonstrates statistical collectors
-        DoubleSummaryStatistics stats = bank.getAccounts().stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .collect(Collectors.summarizingDouble(Transaction::getAmount));
+        DoubleSummaryStatistics stats = bank.accounts().stream()
+                .flatMap(account -> account.transactions().stream())
+                .collect(Collectors.summarizingDouble(Transaction::amount));
         System.out.println("Transaction Statistics: " + stats);
 
         // Exercise 3: Joining customer names with a delimiter
         // Demonstrates joining collector
-        String allCustomers = bank.getAccounts().stream()
-                .map(Account::getCustomerName)
+        String allCustomers = bank.accounts().stream()
+                .map(Account::customerName)
                 .collect(Collectors.joining(", ", "Customers: [", "]"));
         System.out.println(allCustomers);
 
         // Exercise 4: Finding accounts with specific transaction patterns
         // Demonstrates anyMatch/allMatch/noneMatch
-        boolean hasLargeDeposit = bank.getAccounts().stream()
-                .anyMatch(account -> account.getTransactions().stream()
-                        .filter(tx -> tx.getType().equals(Account.DEPOSIT))
-                        .anyMatch(tx -> tx.getAmount() > 5000));
+        boolean hasLargeDeposit = bank.accounts().stream()
+                .anyMatch(account -> account.transactions().stream()
+                        .filter(tx -> tx.type().equals(Account.DEPOSIT))
+                        .anyMatch(tx -> tx.amount() > 5000));
         System.out.println("Has account with large deposit: " + hasLargeDeposit);
 
         // Exercise 5: Transforming data with mapping and flatMapping collectors
         // Demonstrates mapping and flatMapping collectors
-        Map<String, Set<Double>> amountsByType = bank.getAccounts().stream()
-                .flatMap(account -> account.getTransactions().stream())
+        Map<String, Set<Double>> amountsByType = bank.accounts().stream()
+                .flatMap(account -> account.transactions().stream())
                 .collect(Collectors.groupingBy(
-                        Transaction::getType,
-                        Collectors.mapping(Transaction::getAmount, Collectors.toSet())
+                        Transaction::type,
+                        Collectors.mapping(Transaction::amount, Collectors.toSet())
                 ));
         System.out.println("Unique amounts by transaction type: " + amountsByType);
 
         // Exercise 6: Custom collector example - calculating average balance
         // Demonstrates how to create a custom collector
-        double avgBalance = bank.getAccounts().stream()
+        double avgBalance = bank.accounts().stream()
                 .collect(Collectors.averagingDouble(Account::getBalance));
         System.out.println("Average account balance: " + avgBalance);
 
         // Exercise 7: Using reduce for custom accumulation
         // Demonstrates more complex reduce operations
-        double totalPositiveAmount = bank.getAccounts().stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .filter(tx -> tx.getType().equals(Account.DEPOSIT))
-                .map(Transaction::getAmount)
+        double totalPositiveAmount = bank.accounts().stream()
+                .flatMap(account -> account.transactions().stream())
+                .filter(tx -> tx.type().equals(Account.DEPOSIT))
+                .map(Transaction::amount)
                 .reduce(0.0, Double::sum);
         System.out.println("Total positive amount: " + totalPositiveAmount);
     }

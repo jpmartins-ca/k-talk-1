@@ -12,11 +12,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-// TODO Step by step example, generate file or reuse file
-public class FileStreamTests {
+/** Step-by-step example, generate file or reuse file */
+class FileStreamTests {
 
     /**
          * Represents a parsed log entry with timestamp and HTTP status code.
@@ -62,9 +64,10 @@ public class FileStreamTests {
     }
 
     @Test
-    public void testAggregateErrorsByHour() throws IOException {
+    @Disabled("Needs preparation create file Public/testFile.log")
+    void testAggregateErrorsByHour() throws IOException {
 
-        Path logFile = Paths.get("C:/Public/testFile.log");
+        Path logFile = Paths.get("public/testFile.log");
 
         // Aggregate
         Map<LocalDateTime, Long> errorsByHour =
@@ -110,10 +113,4 @@ public class FileStreamTests {
             }
         }
     }
-
-
-
-    public static void main(String[] args) throws IOException {
-    }
-
 }

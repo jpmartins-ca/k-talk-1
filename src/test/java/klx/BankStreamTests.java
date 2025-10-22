@@ -57,6 +57,7 @@ class BankStreamTests {
 
     @Test
     //@Disabled("Displaying output to console to implement using stream, such as peek")
+    @SuppressWarnings("java:S1612") // ignore Lambda can be replaced with Method reference
     void shouldDisplayTwoTimesEachNumberInConsole() {
         List<Integer> numbers = List.of(1, 2, 3, 4);
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
@@ -67,7 +68,7 @@ class BankStreamTests {
         System.setOut(printStream);
         numbers.stream()
                .peek(n -> System.out.print(n))  // First print
-               .peek(n -> System.out.print(n))  // Second print
+               .peek(System.out::print)  // Second print, we can also use method reference instead of lambda
                .forEach(n -> {});  // Terminal operation to execute the stream
 
         String expectedOutput = "11223344";
@@ -114,12 +115,12 @@ class BankStreamTests {
         // Check total amounts per type
         // Calculate total deposit amount using stream
         double depositTotal = grouped.get(Account.DEPOSIT).stream()
-                .mapToDouble(Transaction::getAmount)
+                .mapToDouble(Transaction::amount)
                 .sum();
 
         // Calculate total withdrawal amount using stream
         double withdrawalTotal = grouped.get(Account.WITHDRAWAL).stream()
-                .mapToDouble(Transaction::getAmount)
+                .mapToDouble(Transaction::amount)
                 .sum();
 
         assertEquals(300, depositTotal);

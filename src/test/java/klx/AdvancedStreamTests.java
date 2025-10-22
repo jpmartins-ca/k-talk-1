@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * These tests cover more complex stream operations and can be used
  * as part of a 30-minute practical session on Java Streams.
  */
-public class AdvancedStreamTests {
+class AdvancedStreamTests {
 
     private Bank bank;
     private Transaction t1, t2, t3, t4, t5;
@@ -47,9 +47,9 @@ public class AdvancedStreamTests {
     @Test
     void testPartitioningTransactionsByAmount() {
         // Exercise 1: Partitioning transactions by amount
-        Map<Boolean, List<Transaction>> partitioned = bank.getAccounts().stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .collect(Collectors.partitioningBy(tx -> tx.getAmount() > 1000));
+        Map<Boolean, List<Transaction>> partitioned = bank.accounts().stream()
+                .flatMap(account -> account.transactions().stream())
+                .collect(Collectors.partitioningBy(tx -> tx.amount() > 1000));
 
         // Verify partitioning
         assertEquals(3, partitioned.get(true).size());
@@ -64,9 +64,9 @@ public class AdvancedStreamTests {
     @Test
     void testTransactionStatistics() {
         // Exercise 2: Statistics on transaction amounts
-        DoubleSummaryStatistics stats = bank.getAccounts().stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .collect(Collectors.summarizingDouble(Transaction::getAmount));
+        DoubleSummaryStatistics stats = bank.accounts().stream()
+                .flatMap(account -> account.transactions().stream())
+                .collect(Collectors.summarizingDouble(Transaction::amount));
 
         // Verify statistics
         assertEquals(5, stats.getCount());
@@ -79,8 +79,8 @@ public class AdvancedStreamTests {
     @Test
     void testJoiningCustomerNames() {
         // Exercise 3: Joining customer names with a delimiter
-        String joined = bank.getAccounts().stream()
-                .map(Account::getCustomerName)
+        String joined = bank.accounts().stream()
+                .map(Account::customerName)
                 .collect(Collectors.joining(", ", "Customers: [", "]"));
 
         // Verify joined string
@@ -90,19 +90,19 @@ public class AdvancedStreamTests {
     @Test
     void testFindingAccountsWithSpecificTransactionPatterns() {
         // Exercise 4: Finding accounts with specific transaction patterns
-        boolean hasLargeDeposit = bank.getAccounts().stream()
-                .anyMatch(account -> account.getTransactions().stream()
-                        .filter(tx -> tx.getType().equals(Account.DEPOSIT))
-                        .anyMatch(tx -> tx.getAmount() > 5000));
+        boolean hasLargeDeposit = bank.accounts().stream()
+                .anyMatch(account -> account.transactions().stream()
+                        .filter(tx -> tx.type().equals(Account.DEPOSIT))
+                        .anyMatch(tx -> tx.amount() > 5000));
 
         // Verify pattern matching (more than 5000)
         assertTrue(hasLargeDeposit);
         
         // Test for a pattern that doesn't exist (amount > 10000)
-        boolean hasVeryLargeDeposit = bank.getAccounts().stream()
-                .anyMatch(account -> account.getTransactions().stream()
-                        .filter(tx -> tx.getType().equals(Account.DEPOSIT))
-                        .anyMatch(tx -> tx.getAmount() > 10000));
+        boolean hasVeryLargeDeposit = bank.accounts().stream()
+                .anyMatch(account -> account.transactions().stream()
+                        .filter(tx -> tx.type().equals(Account.DEPOSIT))
+                        .anyMatch(tx -> tx.amount() > 10000));
                         
         assertFalse(hasVeryLargeDeposit);
     }
@@ -110,11 +110,11 @@ public class AdvancedStreamTests {
     @Test
     void testTransformingDataWithMappingCollectors() {
         // Exercise 5: Transforming data with mapping and flatMapping collectors
-        Map<String, Set<Double>> amountsByType = bank.getAccounts().stream()
-                .flatMap(account -> account.getTransactions().stream())
+        Map<String, Set<Double>> amountsByType = bank.accounts().stream()
+                .flatMap(account -> account.transactions().stream())
                 .collect(Collectors.groupingBy(
-                        Transaction::getType,
-                        Collectors.mapping(Transaction::getAmount, Collectors.toSet())
+                        Transaction::type,
+                        Collectors.mapping(Transaction::amount, Collectors.toSet())
                 ));
 
         // Verify transformed data
@@ -128,7 +128,7 @@ public class AdvancedStreamTests {
     @Test
     void testAverageAccountBalance() {
         // Exercise 6: Custom collector example - calculating average balance
-        double avgBalance = bank.getAccounts().stream()
+        double avgBalance = bank.accounts().stream()
                 .collect(Collectors.averagingDouble(Account::getBalance));
 
         // Verify average balance
@@ -142,10 +142,10 @@ public class AdvancedStreamTests {
     @Test
     void testReduceForCustomAccumulation() {
         // Exercise 7: Using reduce for custom accumulation
-        double totalPositiveAmount = bank.getAccounts().stream()
-                .flatMap(account -> account.getTransactions().stream())
-                .filter(tx -> tx.getType().equals(Account.DEPOSIT))
-                .map(Transaction::getAmount)
+        double totalPositiveAmount = bank.accounts().stream()
+                .flatMap(account -> account.transactions().stream())
+                .filter(tx -> tx.type().equals(Account.DEPOSIT))
+                .map(Transaction::amount)
                 .reduce(0.0, Double::sum);
 
         // Verify accumulated result
