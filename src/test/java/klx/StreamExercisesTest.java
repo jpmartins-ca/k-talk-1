@@ -6,15 +6,34 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-// TODO PRE 1.8 -> RESPOSTAS PARA KAHOOT
 class StreamExercisesTest {
 
     /** Exercise 1: Filter Even Numbers
-     * Goal: Given a List, return a new list containing only even numbers.
-     * Justification: filter(...) directly removes odd elements in one pass.*/
+     * Goal: Given a List, return a new list containing only even numbers.*/
     public static List<Integer> filterEvens(List<Integer> numbers) {
-        return numbers.stream()
+
+        List<Integer> listOfEvenNumbers = new ArrayList<>();
+
+        for(Integer someNumber : numbers) {
+            if(someNumber % 2 == 0) {
+                listOfEvenNumbers.add(someNumber);
+            }
+        }
+
+        Iterator<Integer> iteratorNumbers = numbers.iterator();
+        while(iteratorNumbers.hasNext()) {
+            Integer someNumber = iteratorNumbers.next();
+            if(someNumber % 2 != 0) {
+                iteratorNumbers.remove();
+            }
+        }
+
+        numbers.removeIf(someNumber -> someNumber % 2 != 0);
+
+        numbers.stream()
                 .filter(n -> n % 2 == 0).toList();
+
+        return listOfEvenNumbers;
     }
     @Test
     public void testFilterEvens() {
@@ -24,14 +43,28 @@ class StreamExercisesTest {
     }
 
     /**Exercise 2: Uppercase Conversion
-     * Goal: Given a List, produce a list of all strings converted to uppercase.
-     * Justification: map(...) with String::toUpperCase cleanly transforms each element.*/
+     * Goal: Given a List, produce a list of all strings converted to uppercase.*/
     public static List<String> toUppercase(List<String> words) {
+
+        List<String> uppercaseWords = new ArrayList<>(words.size());
+        for(String word : words) {
+            uppercaseWords.add(word.toUpperCase());
+        }
+
+        return uppercaseWords;
+
+        // Correct stream solution
         /*return words.stream()
                 .map(String::toUpperCase)
                 .toList();*/
-        return List.of();
+        // Wrong stream solution
+        /*List<String> result = words.stream()
+                .map(String::toUpperCase)
+                .collect(Collectors.toSet())
+                .stream()
+                .collect(Collectors.toList());*/
     }
+
     @Test
     public void testToUppercase() {
         List<String> input = Arrays.asList("a", "bCd", "Hello");
@@ -43,11 +76,27 @@ class StreamExercisesTest {
      * Goal: Compute the sum of all integers in a List.
      * Justification: mapToInt(...) yields an IntStream for efficient primitive summation.*/
     public static int sumList(List<Integer> numbers) {
+
+        int totalSum = 0;
+
+        for (Integer someNumber : numbers) {
+            totalSum += someNumber;
+        }
+
+        return totalSum;
+
+        // Correct stream solution
         /*return numbers.stream()
                 .mapToInt(Integer::intValue)
                 .sum();
+         OR
+
         return numbers.stream().reduce( 0, Integer::sum);*/
-        return -1;
+
+        // Wrong stream solution
+        /*return (int) numbers.stream().count();
+         */
+
     }
     @Test
     public void testSumList() {
@@ -55,12 +104,36 @@ class StreamExercisesTest {
     }
 
     /**Exercise 4: Find Maximum Value
-     * Goal: Find the largest element in a List, returning Optional.
-     * Justification: max(...) uses a comparator and handles empty lists via Optional.*/
+     * Goal: Find the largest element in a List, returning Optional.*/
     public static Optional maxValue(List<Integer> numbers) {
+
+
+            if(numbers.isEmpty()) {
+                return Optional.empty();
+            }
+
+            Integer maxValue = numbers.get(0);
+            for(Integer someNumber : numbers) {
+                if (someNumber > maxValue) {
+                    maxValue = someNumber;
+                }
+            }
+            return Optional.of(maxValue);
+
+
+            // Alternative implementation
+            /*numbers.sort(Integer::compareTo);
+            return Optional.of(numbers.get(numbers.size()-1));*/
+
+
+
+        // Correct stream solution
         /*return numbers.stream()
                 .max(Integer::compareTo);*/
-        return Optional.empty();
+        // Wrong stream solution
+        /*numbers.stream()
+          .sorted()
+          .findFirst();*/
     }
     @Test
     public void testMaxValue() {
@@ -69,12 +142,38 @@ class StreamExercisesTest {
     }
 
     /** Exercise 5: Group Strings by Length
-     * Goal: Group a list of strings into a map from length to list of strings of that length.
-     * Justification: Collectors.groupingBy(...) classifies elements based on length.*/
+     * Goal: Group a list of strings into a map from length to list of strings of that length.*/
     public static Map<Integer, List<String>> groupByLength(List<String> words) {
-        return words.stream()
-                .collect(Collectors.groupingBy(String::length));
-        //return Map.of();
+
+        Map<Integer,List<String>> lengthMap = new HashMap<>();
+
+        for (String word : words) {
+            Integer length = word.length();
+            List<String> wordsByLength = lengthMap.get(length);
+            if (wordsByLength != null) {
+                wordsByLength.add(word);
+            } else {
+                List<String> wordsByNewLength = new ArrayList<>();
+                wordsByNewLength.add(word);
+                lengthMap.put(length,wordsByNewLength);
+            }
+        }
+
+        for (String word : words) {
+            Integer length = word.length();
+            var lst = lengthMap.computeIfAbsent(length, key -> new ArrayList<>());
+            lst.add(word);
+        }
+
+        return lengthMap;
+
+        // Correct stream solution
+        /*return words.stream()
+                .collect(Collectors.groupingBy(String::length));*/
+
+        // Incorrect stream solution
+        /*Map<Integer, List<String>> map = words.stream().collect(Collectors.toMap(String::length, s -> Arrays.asList(s)));
+        */
     }
     @Test
     public void testGroupByLength() {
@@ -86,13 +185,26 @@ class StreamExercisesTest {
     }
 
     /**Exercise 6 (Java 9+)
-     * Goal: From a sorted list, take elements from the start until a negative value appears.
-     * Justification: takeWhile(...) stops as soon as the predicate fails, avoiding extra checks.*/
+     * Goal: From a sorted list, take elements from the start until a negative value appears.*/
     public static List<Integer> takeUntilNegative(List<Integer> sortedNumbers) {
+
+        List<Integer> takeUntilNegativeNumbers = new ArrayList<>();
+        for(Integer someNumber : sortedNumbers) {
+            if(someNumber < 0) {
+                break;
+            }
+            takeUntilNegativeNumbers.add(someNumber);
+        }
+        return takeUntilNegativeNumbers;
+        // Correct stream solution
         /*return sortedNumbers.stream()
                 .takeWhile(n -> n >= 0)
                 .toList();*/
-        return List.of();
+        // Incorrect stream solution
+        /*List<Integer> result = sortedNumbers.stream()
+                                   .filter(n -> n >= 0)
+                                        .toList();*/
+
     }
     @Test
     public void testTakeUntilNegative() {
@@ -102,28 +214,18 @@ class StreamExercisesTest {
     }
 
     /**Exercise 7 (Java 9+):
-     * Goal: Skip all leading zeros in a list of integers, then collect the rest.
-     * Justification: dropWhile(...) discards the initial matching prefix in one pass.*/
-    public static List<Integer> skipLeadingZeros(List<Integer> numbers) {
-        /*return numbers.stream()
-                .dropWhile(n -> n == 0)
-                .toList();*/
-        return List.of();
-    }
-    @Test
-    public void testSkipLeadingZeros() {
-        List<Integer> input = Arrays.asList(0, 0, 7, 8, 0);
-        List<Integer> expected = Arrays.asList(7, 8, 0);
-        assertEquals(expected, skipLeadingZeros(input));
-    }
-
-    /**Exercise 8 (Java 9+):
-     * Goal: Create a stream from a possibly null reference, filtering nulls gracefully.
-     * Justification: Stream.ofNullable(...) produces either a single-element or empty stream.*/
+     * Goal: Create a stream from a possibly null reference, filtering nulls gracefully.*/
     public static List<String> safeList(String maybeNull) {
+        return maybeNull == null ? List.of() : List.of(maybeNull);
+
+        // Correct stream solution
         /*return Stream.ofNullable(maybeNull)
                 .toList();*/
-        return List.of();
+        // Wrong stream solution
+        /*List<String> result = Stream.of(maybeNull).toList();
+        */
+
+
     }
     @Test
     public void testSafeList() {
@@ -131,32 +233,29 @@ class StreamExercisesTest {
         assertEquals(Collections.singletonList("hi"), safeList("hi"));
     }
 
-    /**Exercise 9: Flatten Nested Lists
-     * Goal: Given List of Lists, return a flat list of all strings.
-     * Justification: flatMap(...) merges inner collections into a single continuous stream.*/
-    public static List<String> flatten(List<List<String>> nested) {
-        /*return nested.stream()
-                .flatMap(Collection::stream)
-                .toList();*/
-        return List.of();
-    }
-    @Test
-    public void testFlatten() {
-        List<List<String>> nested = Arrays.asList(
-                Arrays.asList("x", "y"),
-                Collections.singletonList("z")
-        );
-        assertEquals(Arrays.asList("x", "y", "z"), flatten(nested));
-    }
 
-    /**Exercise 10: Join with Comma
-     * Goal: Convert a list of words into a single comma-separated string.
-     * Justification: Collectors.joining(...) handles delimiter insertion without manual loops.*/
+    /**Exercise 8: Join with Comma
+     * Goal: Convert a list of words into a single comma-separated string.*/
     public static String joinWithCommas(List<String> words) {
+
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = 0; i < words.size(); i++) {
+            sb.append(words.get(i));
+            if(i != (words.size()-1)) {
+                sb.append(", ");
+            }
+        }
+
+        return sb.toString();
+
+        // Correct stream solution
         /*return words.stream()
                 .collect(Collectors.joining(", "));*/
 
-        return "";
+        // Wrong stream solution
+        /*return words.stream()
+           .reduce("", (a, b) -> a + ", " + b);*/
     }
     @Test
     public void testJoinWithCommas() {
@@ -164,28 +263,25 @@ class StreamExercisesTest {
     }
 
 
+    // Other examples
+
     /** Helper Person record*/
     record Person(String department, double salary) {}
 
-    /**Exercise 11: Parallel Grouping of Objects
-     * Goal: Given List, compute total salary per department in parallel.
-     * Justification: groupingBy(..., summingDouble(...)) combines partial results efficiently in a parallel reduction.*/
     public static Map<String, Double> totalSalaryByDeptPar(List<Person> staff) {
-       /* return staff.parallelStream()
+       return staff.parallelStream()
                 .collect(Collectors.groupingBy(
                         Person::department,
                         Collectors.summingDouble(Person::salary)
-                ));*/
-         return Map.of();
+                ));
     }
 
     public static Map<String, Double> totalSalaryByDeptSeq(List<Person> staff) {
-        /*return staff.stream()
+        return staff.stream()
                 .collect(Collectors.groupingBy(
                         Person::department,
                         Collectors.summingDouble(Person::salary)
-                ));*/
-        return Map.of();
+                ));
     }
     @Test
     public void testTotalSalaryByDept() {
