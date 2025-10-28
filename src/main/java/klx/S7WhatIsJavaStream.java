@@ -13,9 +13,11 @@ public class S7WhatIsJavaStream {
         };
 
         double validBalance = account1.getTransactions().parallelStream()
-                .filter(Transaction::isValid)
+                .filter(t -> t.isValid())
                 .mapToDouble(Transaction::getAmount)
                 .sum();
+
+        System.out.println(validBalance);
     }
     static class Transaction{
         boolean isValid(){
