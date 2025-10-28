@@ -11,21 +11,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
-// TODO param. testing and highlight the structure behind the parallel stream
-// GOOD PARALLEL CASE
-// GOOD SEQUENTIAL CASE
-// EQUALS -> GO FOR SEQUENTIAL BECAUSE RESOURCES
-// DATA STRUCTURES FOR WHICH PARALLEL STREAMS PERFORM WORSE
-// FOR THE AUDIENCE
 public class ParallelStreamTest {
 
 
         /**
-         * Total number of elements to process.
-         * With 50_000 elements × 1_000 heavy ops each, this will take
-         * a couple of seconds sequentially on a modern CPU.
+         * Total number of elements and operations to process.
          */
-        private static final int SIZE = 1000;
+        private static final int SIZE = 50_000;
         private static final int OP = 1_000;
 
         private List<Integer> data;
@@ -42,7 +34,6 @@ public class ParallelStreamTest {
 
         /**
          * CPU heavy operation
-         * does 1_000 sin/tan evaluations per input.
          */
         private static double heavyOperation(int n) {
             double sum = 0.0;
@@ -52,35 +43,55 @@ public class ParallelStreamTest {
             return sum;
         }
 
+        private static double forLoop(List<Integer> data) {
+            double warmupLoop = 0.0;
+            for(Integer myInt : data) {
+                warmupLoop += heavyOperation(myInt);
+            }
+            return warmupLoop;
+        }
+
+        private static double streamSeq (List<Integer> data) {
+            return data.stream()
+                    .mapToDouble(ParallelStreamTest::heavyOperation)
+                    .sum();
+        }
+
+        private static double streamParallel (List<Integer> data) {
+            return data.parallelStream()
+                .mapToDouble(ParallelStreamTest::heavyOperation)
+                .sum();
+        }
+
         @Test
         void parallelShouldBeFasterThanSequential() {
+
             // Warm up the JVM
-            double warmupSeq = data.stream()
-                    .mapToDouble(ParallelStreamTest::heavyOperation)
-                    .sum();
-            double warmPar = data.parallelStream()
-                    .mapToDouble(ParallelStreamTest::heavyOperation)
-                    .sum();
+            double warmupLoop = forLoop(data);
+            double warmupSeq = streamSeq(data);
+            double warmPar = streamParallel(data);
+
+            // Sequential
+            long startForLoop = System.nanoTime();
+            double forLoopSum = forLoop(data);
+            long timeForLoop = System.nanoTime() - startForLoop;
 
             // Sequential
             long startSeq = System.nanoTime();
-            double seqSum = data.stream()
-                    .mapToDouble(ParallelStreamTest::heavyOperation)
-                    .sum();
+            double seqSum = streamSeq(data);
             long timeSeq = System.nanoTime() - startSeq;
 
             // Parallel
             long startPar = System.nanoTime();
-            double parSum = data.parallelStream()
-                    .mapToDouble(ParallelStreamTest::heavyOperation)
-                    .sum();
+            double parSum = streamParallel(data);
             long timePar = System.nanoTime() - startPar;
 
 
             assertEquals(seqSum, parSum, 0.0, "Stream sums must match");
 
             System.out.printf(
-                    "Sequential: %.1f ms, Parallel: %.1f ms%n",
+                    "For Loop: %.1f ms, Sequential: %.1f ms, Parallel: %.1f ms%n",
+                    timeForLoop / 1e6,
                     timeSeq / 1e6,
                     timePar / 1e6
             );
