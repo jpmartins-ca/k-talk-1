@@ -58,7 +58,7 @@ class StreamExercisesTest {
                 .map(String::toUpperCase)
                 .toList();*/
         // Wrong stream solution
-        /*List<String> result = words.stream()
+        /*return words.stream()
                 .map(String::toUpperCase)
                 .collect(Collectors.toSet())
                 .stream()
@@ -73,8 +73,7 @@ class StreamExercisesTest {
     }
 
     /**Exercise 3: Sum of Integers
-     * Goal: Compute the sum of all integers in a List.
-     * Justification: mapToInt(...) yields an IntStream for efficient primitive summation.*/
+     * Goal: Compute the sum of all integers in a List.*/
     public static int sumList(List<Integer> numbers) {
 
         int totalSum = 0;
@@ -131,7 +130,7 @@ class StreamExercisesTest {
         /*return numbers.stream()
                 .max(Integer::compareTo);*/
         // Wrong stream solution
-        /*numbers.stream()
+        /*return numbers.stream()
           .sorted()
           .findFirst();*/
     }
@@ -171,8 +170,8 @@ class StreamExercisesTest {
         /*return words.stream()
                 .collect(Collectors.groupingBy(String::length));*/
 
-        // Incorrect stream solution
-        /*Map<Integer, List<String>> map = words.stream().collect(Collectors.toMap(String::length, s -> Arrays.asList(s)));
+        // Wrong stream solution
+        /*return words.stream().collect(Collectors.toMap(String::length, s -> Arrays.asList(s)));
         */
     }
     @Test
@@ -200,10 +199,10 @@ class StreamExercisesTest {
         /*return sortedNumbers.stream()
                 .takeWhile(n -> n >= 0)
                 .toList();*/
-        // Incorrect stream solution
-        /*List<Integer> result = sortedNumbers.stream()
-                                   .filter(n -> n >= 0)
-                                        .toList();*/
+        // Wrong stream solution
+        /*return sortedNumbers.stream()
+                    .filter(n -> n >= 0)
+                    .toList();*/
 
     }
     @Test
